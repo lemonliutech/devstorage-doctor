@@ -2,11 +2,14 @@
 
 ## v0.1 Product Design
 
-- [x] Define product positioning
+- [x] Define product positioning as development storage cleanup, not cache-only cleanup
 - [x] Define target users and jobs to be done
-- [x] Define MVP cache categories
+- [x] Define MVP development storage categories
+- [x] Define cache, dependency store, build artifact, package output, protected item, and manual-review vocabulary
 - [x] Define risk model
 - [x] Define exception catalog
+- [x] Define package-output manual-review policy
+- [x] Define scope completeness and post-MVP expansion strategy
 - [x] Define UX flow
 
 ## v0.2 Prototype

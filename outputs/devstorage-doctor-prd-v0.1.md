@@ -862,7 +862,7 @@ The MVP will not:
 
 ### Functional Metrics
 
-- Detects at least 80% of common developer cache categories on target machines.
+- Detects at least 80% of common development storage categories on target machines.
 - Recovers 30GB or more on cache-heavy developer machines without breaking active toolchains.
 - Provides an exception reason for every failed cleanup item.
 
