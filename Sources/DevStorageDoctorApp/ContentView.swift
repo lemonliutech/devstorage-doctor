@@ -26,8 +26,10 @@ struct ContentView: View {
             switch sidebarSelection ?? .overview {
             case .overview:
                 OverviewView()
+            case .exceptions:
+                ExceptionsView()
             case .settings:
-                SettingsPlaceholderView()
+                SettingsView()
             case .reports:
                 ReportsPlaceholderView()
             default:
@@ -74,17 +76,6 @@ struct ToolchainDetailView: View {
 }
 
 // MARK: - Placeholders
-
-struct SettingsPlaceholderView: View {
-    var body: some View {
-        ContentUnavailableView(
-            "Settings",
-            systemImage: "gearshape",
-            description: Text("Coming soon.")
-        )
-        .navigationTitle("Settings")
-    }
-}
 
 struct ReportsPlaceholderView: View {
     var body: some View {

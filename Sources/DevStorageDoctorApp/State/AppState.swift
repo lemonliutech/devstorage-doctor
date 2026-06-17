@@ -13,6 +13,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case node        = "Node / pnpm / npm"
     case harmonyos   = "HarmonyOS / DevEco"
     case manual      = "Manual Review"
+    case exceptions  = "Exceptions"
     case reports     = "Reports"
     case settings    = "Settings"
 
@@ -27,9 +28,10 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .cocoapods:  return "shippingbox"
         case .node:       return "network"
         case .harmonyos:  return "cpu"
-        case .manual:     return "questionmark.folder"
-        case .reports:    return "doc.text"
-        case .settings:   return "gearshape"
+        case .manual:      return "questionmark.folder"
+        case .exceptions:  return "exclamationmark.triangle"
+        case .reports:     return "doc.text"
+        case .settings:    return "gearshape"
         }
     }
 
@@ -69,9 +71,16 @@ final class AppState {
     var scanPhase: ScanPhase = .idle
     var results: [StorageItem] = []
     var selectedItemIDs: Set<String> = []
-    var projectRoots: [URL] = []
     var lastScanDate: Date?
     var showingCleanupPlan = false
+
+    // Persisted settings
+    var projectRoots: [URL] = AppState.loadURLs(key: "projectRoots") {
+        didSet { AppState.saveURLs(projectRoots, key: "projectRoots") }
+    }
+    var excludedPaths: [String] = (UserDefaults.standard.stringArray(forKey: "excludedPaths") ?? []) {
+        didSet { UserDefaults.standard.set(excludedPaths, forKey: "excludedPaths") }
+    }
 
     // Cleanup execution
     var cleanupPhase: CleanupPhase = .idle
@@ -144,8 +153,11 @@ final class AppState {
                     rule.scan(measurer: FileSizeMeasurer())
                 }.value
 
-                results.append(contentsOf: items)
-                for item in items where item.defaultSelected && item.status == .found {
+                let filtered = items.filter { item in
+                    !excludedPaths.contains { item.path.hasPrefix($0) }
+                }
+                results.append(contentsOf: filtered)
+                for item in filtered where item.defaultSelected && item.status == .found {
                     selectedItemIDs.insert(item.id)
                 }
                 scanProgressCurrent = index + 1
@@ -187,6 +199,17 @@ final class AppState {
                 self?.selectedItemIDs.removeAll()
             }
         }
+    }
+
+    // MARK: - Persistence helpers
+
+    private static func loadURLs(key: String) -> [URL] {
+        (UserDefaults.standard.stringArray(forKey: key) ?? [])
+            .map { URL(fileURLWithPath: $0) }
+    }
+
+    private static func saveURLs(_ urls: [URL], key: String) {
+        UserDefaults.standard.set(urls.map(\.path), forKey: key)
     }
 
     func items(for toolchain: String) -> [StorageItem] {

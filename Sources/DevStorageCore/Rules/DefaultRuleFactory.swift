@@ -135,7 +135,10 @@ public enum DefaultRuleFactory {
             )
         ]
 
-        // Auto-discover Flutter projects in common developer directories
+        // Auto-discover Android projects across home directory
+        rules.append(AndroidProjectDiscoveryRule(homeDirectory: homeDirectory))
+
+        // Auto-discover Flutter projects across home directory
         rules.append(FlutterProjectDiscoveryRule(homeDirectory: homeDirectory))
 
         // Also scan any explicitly configured project roots
