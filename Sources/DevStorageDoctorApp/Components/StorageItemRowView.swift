@@ -44,16 +44,17 @@ struct StorageItemRowView: View {
                 } else if !canSelect {
                     Image(systemName: "minus")
                         .foregroundStyle(.tertiary)
-                } else if item.subPaths.isEmpty {
+                } else {
                     Toggle("", isOn: Binding(
-                        get: { isSelected },
+                        get: {
+                            item.subPaths.isEmpty
+                                ? isSelected
+                                : !(state.selectedSubPaths[item.id] ?? []).isEmpty
+                        },
                         set: { _ in onToggle() }
                     ))
                     .toggleStyle(.checkbox)
                     .labelsHidden()
-                } else {
-                    // Aggregated item — tri-state checkbox
-                    AggregateCheckbox(item: item, onToggle: onToggle)
                 }
             }
             .frame(width: 18)
@@ -163,35 +164,6 @@ struct StorageItemRowView: View {
                 .frame(width: 56, alignment: .trailing)
             content()
             Spacer()
-        }
-    }
-}
-
-// MARK: - Aggregate tri-state checkbox
-
-struct AggregateCheckbox: View {
-    @Environment(AppState.self) private var state
-    let item: StorageItem
-    let onToggle: () -> Void
-
-    var body: some View {
-        let selState = state.subPathSelectionState(for: item)
-        Button {
-            onToggle()
-        } label: {
-            Image(systemName: iconName(for: selState))
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(selState == .none ? Color(nsColor: .tertiaryLabelColor) : Color.accentColor)
-        }
-        .buttonStyle(.plain)
-        .frame(width: 14)
-    }
-
-    private func iconName(for state: SubPathSelectionState) -> String {
-        switch state {
-        case .none:    return "square"
-        case .partial: return "minus.square.fill"
-        case .all:     return "checkmark.square.fill"
         }
     }
 }
