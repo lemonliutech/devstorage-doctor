@@ -1,14 +1,14 @@
-# DevCache Doctor PRD v0.1
+# DevStorage Doctor PRD v0.1
 
 ## 1. Product Summary
 
-**Product name:** DevCache Doctor
+**Product name:** DevStorage Doctor
 
 **Theme:** macOS development storage cleanup tool for cross-platform developers
 
 **Positioning:** A macOS development storage diagnostic and cleanup tool for cross-platform mobile developers. It helps users understand disk usage, classify cleanup risk, generate an auditable cleanup plan, and safely recover disk space.
 
-DevCache Doctor is not a generic "junk cleaner". It focuses on reproducible development storage that is large, confusing, and often safe to rebuild or regenerate, but risky to delete blindly.
+DevStorage Doctor is not a generic "junk cleaner". It focuses on reproducible development storage that is large, confusing, and often safe to rebuild or regenerate, but risky to delete blindly.
 
 The product scope includes caches, dependency stores, installed SDK/runtime artifacts, project build outputs, and temporary packaging outputs. This is important because developers often create app packages only to test an output, then never manually remove the generated artifacts.
 

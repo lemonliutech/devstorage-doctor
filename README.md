@@ -1,6 +1,6 @@
-# DevCache Doctor
+# DevStorage Doctor
 
-DevCache Doctor is a macOS development storage diagnostic and cleanup tool for cross-platform mobile developers.
+DevStorage Doctor is a macOS development storage diagnostic and cleanup tool for cross-platform mobile developers.
 
 It focuses on explainable cleanup for reproducible development storage across Xcode, iOS Simulator, Android, Gradle, Flutter, Dart, FVM, CocoaPods, Node, pnpm, npm, HarmonyOS, DevEco, ohpm, and hvigor.
 
@@ -17,8 +17,8 @@ The product goal is not to be a generic junk cleaner. It should help developers 
 
 ## Product Docs
 
-- [PRD v0.1](docs/superpowers/specs/2026-06-17-devcache-doctor-prd.md)
-- [UX Flow v0.1](docs/superpowers/specs/2026-06-17-devcache-doctor-ux-flow.md)
+- [PRD v0.1](docs/superpowers/specs/2026-06-17-devstorage-doctor-prd.md)
+- [UX Flow v0.1](docs/superpowers/specs/2026-06-17-devstorage-doctor-ux-flow.md)
 
 ## Core Flow
 

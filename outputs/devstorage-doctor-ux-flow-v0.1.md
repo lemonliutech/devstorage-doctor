@@ -1,8 +1,8 @@
-# DevCache Doctor UX Flow v0.1
+# DevStorage Doctor UX Flow v0.1
 
 ## 1. UX Goal
 
-DevCache Doctor should make development storage cleanup feel explainable, controlled, and reversible where possible.
+DevStorage Doctor should make development storage cleanup feel explainable, controlled, and reversible where possible.
 
 The app must avoid the visual language of generic "junk cleaners". It should feel like a professional developer utility: dense, clear, calm, and precise.
 
@@ -544,7 +544,7 @@ Protected because this simulator is currently booted.
 Unsupported example:
 
 ```text
-Large directory found, but DevCache Doctor does not have a safe cleanup rule for it.
+Large directory found, but DevStorage Doctor does not have a safe cleanup rule for it.
 ```
 
 ### Confirmation Copy
