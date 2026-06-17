@@ -97,7 +97,7 @@ struct CleanupPlanPanelView: View {
 
             // Generate Plan — always visible at the bottom
             Button {
-                // TODO: navigate to cleanup plan screen
+                state.showingCleanupPlan = true
             } label: {
                 Label("Generate Plan", systemImage: "list.bullet.clipboard")
                     .frame(maxWidth: .infinity)
@@ -105,6 +105,13 @@ struct CleanupPlanPanelView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .padding(Spacing.medium)
+            .sheet(isPresented: Binding(
+                get: { state.showingCleanupPlan },
+                set: { state.showingCleanupPlan = $0 }
+            )) {
+                CleanupPlanView()
+                    .environment(state)
+            }
         }
     }
 

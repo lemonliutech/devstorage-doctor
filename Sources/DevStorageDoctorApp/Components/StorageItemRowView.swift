@@ -16,12 +16,19 @@ struct StorageItemRowView: View {
     }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            expandedDetail
-        } label: {
+        VStack(spacing: 0) {
             rowLabel
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isExpanded.toggle()
+                }
+
+            if isExpanded {
+                expandedDetail
+                    .transition(.opacity)
+            }
         }
-        .disclosureGroupStyle(PlainDisclosureStyle())
+        .animation(.easeInOut(duration: 0.18), value: isExpanded)
     }
 
     // MARK: - Collapsed label
@@ -76,9 +83,13 @@ struct StorageItemRowView: View {
 
             RiskBadgeView(riskLevel: item.riskLevel)
                 .frame(width: 90, alignment: .trailing)
+
+            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .frame(width: 12)
         }
         .padding(.vertical, 2)
-        .contentShape(Rectangle())
     }
 
     // MARK: - Expanded detail
@@ -86,25 +97,17 @@ struct StorageItemRowView: View {
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 6) {
             detailRow("Path") {
-                HStack(spacing: Spacing.tight) {
-                    Text(item.path)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .lineLimit(2)
-                    Spacer()
-                    Button {
+                let pathExists = FileManager.default.fileExists(atPath: item.path)
+                Text(item.path)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(pathExists ? Color.accentColor : .secondary)
+                    .textSelection(.enabled)
+                    .lineLimit(2)
+                    .help(pathExists ? "Click to show in Finder" : item.path)
+                    .onTapGesture {
+                        guard pathExists else { return }
                         NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
-                    } label: {
-                        Label("Show in Finder", systemImage: "arrow.right.circle")
-                            .labelStyle(.iconOnly)
-                            .font(.caption)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help("Show in Finder")
-                    .disabled(!FileManager.default.fileExists(atPath: item.path))
-                }
             }
             detailRow("Toolchain") {
                 Text(item.toolchain)
@@ -125,7 +128,7 @@ struct StorageItemRowView: View {
             }
         }
         .padding(.leading, 26)
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     private func detailRow<V: View>(_ label: String, @ViewBuilder content: () -> V) -> some View {
@@ -136,32 +139,6 @@ struct StorageItemRowView: View {
                 .frame(width: 56, alignment: .trailing)
             content()
             Spacer()
-        }
-    }
-}
-
-// MARK: - Plain disclosure style (no arrow padding shift)
-
-struct PlainDisclosureStyle: DisclosureGroupStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                configuration.label
-                Image(systemName: configuration.isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    configuration.isExpanded.toggle()
-                }
-            }
-
-            if configuration.isExpanded {
-                configuration.content
-                    .transition(.opacity)
-            }
         }
     }
 }

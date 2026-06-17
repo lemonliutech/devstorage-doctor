@@ -56,7 +56,7 @@ struct ToolchainSectionView: View {
 
     var body: some View {
         Section(isExpanded: $isExpanded) {
-            ForEach(items) { item in
+            ForEach(items.filter { $0.status != .missing }) { item in
                 StorageItemRowView(
                     item: item,
                     isSelected: selectedIDs.contains(item.id),

@@ -64,6 +64,7 @@ final class AppState {
     var selectedItemIDs: Set<String> = []
     var projectRoots: [URL] = []
     var lastScanDate: Date?
+    var showingCleanupPlan = false
 
     // Scan progress
     var scanProgressCurrent: Int = 0
