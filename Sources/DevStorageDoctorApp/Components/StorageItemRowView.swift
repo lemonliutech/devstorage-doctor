@@ -41,19 +41,26 @@ struct StorageItemRowView: View {
                 if item.riskLevel == .protected {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.secondary)
+                } else if item.status == .failed {
+                    Image(systemName: "exclamationmark.circle")
+                        .foregroundStyle(.orange)
+                } else if item.category == .packageOutput || item.riskLevel == .manualReview {
+                    Image(systemName: "eye")
+                        .foregroundStyle(.secondary)
                 } else if !canSelect {
                     Image(systemName: "minus")
                         .foregroundStyle(.tertiary)
-                } else if item.subPaths.isEmpty {
+                } else {
                     Toggle("", isOn: Binding(
-                        get: { isSelected },
+                        get: {
+                            item.subPaths.isEmpty
+                                ? isSelected
+                                : !(state.selectedSubPaths[item.id] ?? []).isEmpty
+                        },
                         set: { _ in onToggle() }
                     ))
                     .toggleStyle(.checkbox)
                     .labelsHidden()
-                } else {
-                    // Aggregated item — tri-state checkbox
-                    AggregateCheckbox(item: item, onToggle: onToggle)
                 }
             }
             .frame(width: 18)
@@ -109,7 +116,6 @@ struct StorageItemRowView: View {
                 // Aggregated item — per-sub-path checkboxes
                 detailRow("Paths") {
                     VStack(alignment: .leading, spacing: 6) {
-                        subPathBatchControls
                         ForEach(item.subPaths) { sub in
                             SubPathRowView(item: item, subPath: sub)
                         }
@@ -136,28 +142,6 @@ struct StorageItemRowView: View {
         }
         .padding(.leading, 26)
         .padding(.vertical, 6)
-    }
-
-    // MARK: - Batch controls for sub-paths
-
-    @ViewBuilder
-    private var subPathBatchControls: some View {
-        if !item.subPaths.isEmpty {
-            HStack(spacing: Spacing.tight) {
-                Button("全选") { state.selectAllSubPaths(for: item) }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                Text("·")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                Button("反选") { state.invertSubPathSelection(for: item) }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                Spacer()
-            }
-        }
     }
 
     // Sub-path rows defined at file scope below as SubPathRowView
@@ -190,35 +174,6 @@ struct StorageItemRowView: View {
     }
 }
 
-// MARK: - Aggregate tri-state checkbox
-
-struct AggregateCheckbox: View {
-    @Environment(AppState.self) private var state
-    let item: StorageItem
-    let onToggle: () -> Void
-
-    var body: some View {
-        let selState = state.subPathSelectionState(for: item)
-        Button {
-            onToggle()
-        } label: {
-            Image(systemName: iconName(for: selState))
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(selState == .none ? Color(nsColor: .tertiaryLabelColor) : Color.accentColor)
-        }
-        .buttonStyle(.plain)
-        .frame(width: 14)
-    }
-
-    private func iconName(for state: SubPathSelectionState) -> String {
-        switch state {
-        case .none:    return "square"
-        case .partial: return "minus.square.fill"
-        case .all:     return "checkmark.square.fill"
-        }
-    }
-}
-
 // MARK: - Sub-path row
 
 struct SubPathRowView: View {
@@ -244,9 +199,9 @@ struct SubPathRowView: View {
                 .toggleStyle(.checkbox)
                 .labelsHidden()
             } else {
-                Image(systemName: "minus")
+                Image(systemName: item.category == .packageOutput ? "eye" : "minus")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .frame(width: 14)
             }
 
