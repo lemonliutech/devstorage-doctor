@@ -14,10 +14,13 @@ struct ScanResultListView: View {
     ]
 
     private var toolchains: [String] {
-        let inResults = Set(state.results.map(\.toolchain))
-        var ordered = toolchainOrder.filter { inResults.contains($0) }
-        let extras = inResults.subtracting(toolchainOrder).sorted()
-        ordered.append(contentsOf: extras)
+        let found = Set(
+            state.results
+                .filter { $0.status != .missing }
+                .map(\.toolchain)
+        )
+        var ordered = toolchainOrder.filter { found.contains($0) }
+        ordered.append(contentsOf: found.subtracting(toolchainOrder).sorted())
         return ordered
     }
 
@@ -39,6 +42,7 @@ struct ScanResultListView: View {
 // MARK: - Toolchain Section
 
 struct ToolchainSectionView: View {
+    @Environment(AppState.self) private var state
     let toolchain: String
     let items: [StorageItem]
     let selectedIDs: Set<String>
@@ -46,17 +50,26 @@ struct ToolchainSectionView: View {
 
     @State private var isExpanded = true
 
+    private var visibleItems: [StorageItem] {
+        items.filter { $0.status != .missing }
+    }
+
     private var totalBytes: UInt64 {
-        items.compactMap(\.sizeBytes).reduce(0, +)
+        visibleItems.compactMap(\.sizeBytes).reduce(0, +)
     }
 
     private var selectedCount: Int {
-        items.filter { selectedIDs.contains($0.id) }.count
+        // Count parent selections; partial sub-path selections also count
+        visibleItems.filter { item in
+            if selectedIDs.contains(item.id) { return true }
+            if let sub = state.selectedSubPaths[item.id] { return !sub.isEmpty }
+            return false
+        }.count
     }
 
     var body: some View {
         Section(isExpanded: $isExpanded) {
-            ForEach(items.filter { $0.status != .missing }) { item in
+            ForEach(visibleItems) { item in
                 StorageItemRowView(
                     item: item,
                     isSelected: selectedIDs.contains(item.id),
@@ -72,10 +85,12 @@ struct ToolchainSectionView: View {
                     .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
-                Text(UInt64(totalBytes).formatted(.byteCount(style: .file)))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+                if totalBytes > 0 {
+                    Text(totalBytes.formatted(.byteCount(style: .file)))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
                 if selectedCount > 0 {
                     Text("· \(selectedCount) selected")
                         .font(.caption)

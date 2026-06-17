@@ -6,22 +6,42 @@ struct CleanupPlanPanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if state.selectedItems.isEmpty {
-                emptyState
-            } else {
+            switch panelState {
+            case .noScan:
+                noScanState
+            case .noneSelected:
+                noneSelectedState
+            case .hasSelection:
                 planContent
             }
         }
         .frame(minWidth: 200, idealWidth: 220)
     }
 
-    // MARK: - Empty
+    private enum PanelState { case noScan, noneSelected, hasSelection }
 
-    private var emptyState: some View {
+    private var panelState: PanelState {
+        if case .idle = state.scanPhase { return .noScan }
+        if state.results.isEmpty { return .noScan }
+        return state.selectedItems.isEmpty ? .noneSelected : .hasSelection
+    }
+
+    // MARK: - Empty states
+
+    private var noScanState: some View {
         ContentUnavailableView {
-            Label("No Items Selected", systemImage: "tray")
+            Label("No Scan Yet", systemImage: "magnifyingglass.circle")
         } description: {
-            Text("Check items in the results list to build a cleanup plan.")
+            Text("Run a scan to see cleanup options.")
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var noneSelectedState: some View {
+        ContentUnavailableView {
+            Label("Nothing Selected", systemImage: "checkmark.circle")
+        } description: {
+            Text("Select items in the results list to build a cleanup plan.")
         }
         .frame(maxHeight: .infinity)
     }
@@ -32,70 +52,15 @@ struct CleanupPlanPanelView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.base) {
-
-                    // Recovery estimate
-                    GroupBox("Recovery Estimate") {
-                        VStack(spacing: Spacing.tight) {
-                            HStack {
-                                Text("Items selected")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("\(state.selectedItems.count)")
-                                    .font(.callout)
-                                    .monospacedDigit()
-                            }
-                            Divider()
-                            HStack {
-                                Text("Recoverable space")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text(state.estimatedRecoveryBytes.formatted(.byteCount(style: .file)))
-                                    .font(.callout)
-                                    .fontWeight(.semibold)
-                                    .monospacedDigit()
-                                    .foregroundStyle(.green)
-                            }
-                        }
-                    }
-
-                    // Risk breakdown
-                    let low    = state.selectedItems.filter { $0.riskLevel == .low }.count
-                    let medium = state.selectedItems.filter { $0.riskLevel == .medium }.count
-                    let high   = state.selectedItems.filter { $0.riskLevel == .high }.count
-
-                    if low > 0 || medium > 0 || high > 0 {
-                        GroupBox("Risk Breakdown") {
-                            VStack(spacing: Spacing.tight) {
-                                if low > 0    { riskRow(label: "Low",    count: low,    color: .riskLow) }
-                                if medium > 0 { riskRow(label: "Medium", count: medium, color: .riskMedium) }
-                                if high > 0   { riskRow(label: "High",   count: high,   color: .riskHigh) }
-                            }
-                        }
-                    }
-
-                    // Excluded items note
-                    let excluded = state.results.filter {
-                        $0.riskLevel == .protected || $0.category == .packageOutput
-                    }.count
-
-                    if excluded > 0 {
-                        Label(
-                            "\(excluded) item\(excluded == 1 ? "" : "s") excluded (protected)",
-                            systemImage: "lock"
-                        )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, Spacing.tight)
-                    }
+                    recoveryGroupBox
+                    riskGroupBox
+                    excludedNote
                 }
                 .padding(Spacing.medium)
             }
 
             Divider()
 
-            // Generate Plan — always visible at the bottom
             Button {
                 state.showingCleanupPlan = true
             } label: {
@@ -115,7 +80,59 @@ struct CleanupPlanPanelView: View {
         }
     }
 
-    private func riskRow(label: String, count: Int, color: Color) -> some View {
+    private var recoveryGroupBox: some View {
+        GroupBox("Recovery Estimate") {
+            VStack(spacing: Spacing.tight) {
+                planRow("Selected", value: "\(state.selectedItems.count) items")
+                Divider()
+                HStack {
+                    Text("Recoverable")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(state.estimatedRecoveryBytes.formatted(.byteCount(style: .file)))
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                        .foregroundStyle(.green)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var riskGroupBox: some View {
+        let low    = state.selectedItems.filter { $0.riskLevel == .low }.count
+        let medium = state.selectedItems.filter { $0.riskLevel == .medium }.count
+        let high   = state.selectedItems.filter { $0.riskLevel == .high }.count
+
+        if low > 0 || medium > 0 || high > 0 {
+            GroupBox("Risk Breakdown") {
+                VStack(spacing: Spacing.tight) {
+                    if low > 0    { riskRow("Low",    low,    .riskLow) }
+                    if medium > 0 { riskRow("Medium", medium, .riskMedium) }
+                    if high > 0   { riskRow("High",   high,   .riskHigh) }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var excludedNote: some View {
+        let count = state.results.filter {
+            $0.riskLevel == .protected || $0.category == .packageOutput
+        }.count
+        if count > 0 {
+            Label(
+                "\(count) item\(count == 1 ? "" : "s") excluded",
+                systemImage: "lock"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private func riskRow(_ label: String, _ count: Int, _ color: Color) -> some View {
         HStack {
             Label(label, systemImage: "circle.fill")
                 .foregroundStyle(color)
@@ -125,6 +142,14 @@ struct CleanupPlanPanelView: View {
                 .monospacedDigit()
                 .foregroundStyle(color)
                 .font(.callout)
+        }
+    }
+
+    private func planRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label).font(.callout).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).font(.callout).monospacedDigit()
         }
     }
 }

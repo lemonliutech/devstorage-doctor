@@ -28,7 +28,7 @@ struct StorageItemRowView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.18), value: isExpanded)
+        .animation(.standard, value: isExpanded)
     }
 
     // MARK: - Collapsed label
