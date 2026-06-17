@@ -96,20 +96,29 @@ struct StorageItemRowView: View {
 
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 6) {
-            detailRow("Path") {
-                let pathExists = FileManager.default.fileExists(atPath: item.path)
-                Button {
-                    NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
-                } label: {
-                    Text(item.path)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(pathExists ? Color.accentColor : .secondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
+            if item.subPaths.isEmpty {
+                // Single path item
+                detailRow("Path") {
+                    pathButton(item.path)
                 }
-                .buttonStyle(.plain)
-                .help(pathExists ? "Show in Finder" : item.path)
-                .disabled(!pathExists)
+            } else {
+                // Aggregated item — show each sub-path sorted largest first
+                detailRow("Paths") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(item.subPaths, id: \.path) { sub in
+                            HStack(spacing: Spacing.small) {
+                                pathButton(sub.path)
+                                Spacer()
+                                if let bytes = sub.sizeBytes {
+                                    Text(bytes.formatted(.byteCount(style: .file)))
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .monospacedDigit()
+                                }
+                            }
+                        }
+                    }
+                }
             }
             detailRow("Toolchain") {
                 Text(item.toolchain)
@@ -131,6 +140,22 @@ struct StorageItemRowView: View {
         }
         .padding(.leading, 26)
         .padding(.vertical, 6)
+    }
+
+    private func pathButton(_ path: String) -> some View {
+        let exists = FileManager.default.fileExists(atPath: path)
+        return Button {
+            NSWorkspace.shared.selectFile(path, inFileViewerRootedAtPath: "")
+        } label: {
+            Text(path)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(exists ? Color.accentColor : .secondary)
+                .lineLimit(1)
+                .multilineTextAlignment(.leading)
+        }
+        .buttonStyle(.plain)
+        .help(exists ? "Show in Finder" : path)
+        .disabled(!exists)
     }
 
     private func detailRow<V: View>(_ label: String, @ViewBuilder content: () -> V) -> some View {

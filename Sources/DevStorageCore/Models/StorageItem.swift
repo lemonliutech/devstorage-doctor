@@ -1,3 +1,13 @@
+public struct StorageSubPath: Codable, Sendable, Equatable {
+    public let path: String
+    public let sizeBytes: UInt64?
+
+    public init(path: String, sizeBytes: UInt64?) {
+        self.path = path
+        self.sizeBytes = sizeBytes
+    }
+}
+
 public struct StorageItem: Codable, Sendable, Equatable, Identifiable {
     public let id: String
     public let displayName: String
@@ -10,6 +20,7 @@ public struct StorageItem: Codable, Sendable, Equatable, Identifiable {
     public let defaultSelected: Bool
     public let explanation: String
     public let exception: ScanException?
+    public let subPaths: [StorageSubPath]
 
     public init(
         id: String,
@@ -22,7 +33,8 @@ public struct StorageItem: Codable, Sendable, Equatable, Identifiable {
         status: ScanStatus,
         defaultSelected: Bool,
         explanation: String,
-        exception: ScanException?
+        exception: ScanException?,
+        subPaths: [StorageSubPath] = []
     ) {
         self.id = id
         self.displayName = displayName
@@ -35,5 +47,6 @@ public struct StorageItem: Codable, Sendable, Equatable, Identifiable {
         self.defaultSelected = defaultSelected
         self.explanation = explanation
         self.exception = exception
+        self.subPaths = subPaths
     }
 }

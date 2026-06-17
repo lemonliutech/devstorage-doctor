@@ -44,26 +44,28 @@ public struct FlutterProjectDiscoveryRule: ScanRule {
 
         for type in Self.artifactTypes {
             var totalBytes: UInt64 = 0
-            var count = 0
-            var firstPath: String?
+            var subPaths: [StorageSubPath] = []
 
             for root in projectRoots {
                 let url = root.appendingPathComponent(type.rel)
                 if case .success(let size) = measurer.measure(url: url) {
                     totalBytes += size
-                    count += 1
-                    if firstPath == nil { firstPath = url.path }
+                    subPaths.append(StorageSubPath(path: url.path, sizeBytes: size))
                 }
             }
 
-            guard count > 0, let representativePath = firstPath else { continue }
+            guard !subPaths.isEmpty else { continue }
 
+            // Sort largest first for display
+            subPaths.sort { ($0.sizeBytes ?? 0) > ($1.sizeBytes ?? 0) }
+
+            let count = subPaths.count
             let suffix = count == 1 ? "1 project" : "\(count) projects"
 
             results.append(StorageItem(
                 id: "flutter-discovery:\(type.id)",
                 displayName: type.name,
-                path: representativePath,
+                path: subPaths[0].path,
                 category: type.category,
                 toolchain: toolchain,
                 sizeBytes: totalBytes,
@@ -71,7 +73,8 @@ public struct FlutterProjectDiscoveryRule: ScanRule {
                 status: .found,
                 defaultSelected: false,
                 explanation: suffix,
-                exception: nil
+                exception: nil,
+                subPaths: subPaths
             ))
         }
 
