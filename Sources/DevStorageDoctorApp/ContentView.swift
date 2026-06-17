@@ -19,18 +19,23 @@ struct ContentView: View {
 
     @ViewBuilder
     private var detailView: some View {
-        switch sidebarSelection ?? .overview {
-        case .overview:
-            OverviewView()
-        case .settings:
-            SettingsPlaceholderView()
-        case .reports:
-            ReportsPlaceholderView()
-        default:
-            if let toolchain = sidebarSelection?.toolchainKey {
-                ToolchainDetailView(toolchain: toolchain)
-            } else {
+        // Execution and report take over the content column
+        if state.cleanupPhase == .executing || state.cleanupPhase == .done {
+            CleanupExecutionView()
+        } else {
+            switch sidebarSelection ?? .overview {
+            case .overview:
                 OverviewView()
+            case .settings:
+                SettingsPlaceholderView()
+            case .reports:
+                ReportsPlaceholderView()
+            default:
+                if let toolchain = sidebarSelection?.toolchainKey {
+                    ToolchainDetailView(toolchain: toolchain)
+                } else {
+                    OverviewView()
+                }
             }
         }
     }

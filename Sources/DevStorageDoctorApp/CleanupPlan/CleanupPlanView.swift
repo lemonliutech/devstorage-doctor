@@ -280,7 +280,9 @@ struct CleanupPlanView: View {
                 .buttonStyle(.bordered)
 
             Button("Proceed to Execution") {
-                // TODO: execution screen
+                dismiss()
+                state.showingCleanupPlan = false
+                state.runCleanup()
             }
             .buttonStyle(.borderedProminent)
             .disabled(actionItems.isEmpty)

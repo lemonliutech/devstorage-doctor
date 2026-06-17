@@ -1,5 +1,6 @@
 import Foundation
 import DevStorageCore
+import AppKit
 
 // MARK: - Sidebar Navigation
 
@@ -54,6 +55,12 @@ enum ScanPhase: Equatable {
     case failed(String)
 }
 
+enum CleanupPhase: Equatable {
+    case idle
+    case executing
+    case done
+}
+
 // MARK: - App State
 
 @MainActor
@@ -65,6 +72,18 @@ final class AppState {
     var projectRoots: [URL] = []
     var lastScanDate: Date?
     var showingCleanupPlan = false
+
+    // Cleanup execution
+    var cleanupPhase: CleanupPhase = .idle
+    var cleanupProgressCurrent: Int = 0
+    var cleanupProgressTotal: Int = 0
+    var cleanupCurrentItemName: String = ""
+    var cleanupReport: CleanupReport?
+
+    var cleanupProgress: Double {
+        cleanupProgressTotal > 0
+            ? Double(cleanupProgressCurrent) / Double(cleanupProgressTotal) : 0
+    }
 
     // Scan progress
     var scanProgressCurrent: Int = 0
@@ -135,6 +154,38 @@ final class AppState {
             scanningRuleName = ""
             lastScanDate = Date()
             scanPhase = .done
+        }
+    }
+
+    func runCleanup() {
+        let itemsToClean = selectedItems
+        guard !itemsToClean.isEmpty else { return }
+
+        cleanupPhase = .executing
+        cleanupProgressCurrent = 0
+        cleanupProgressTotal = itemsToClean.count
+        cleanupCurrentItemName = ""
+        cleanupReport = nil
+
+        Task.detached(priority: .userInitiated) {
+            let executor = CleanupExecutor()
+            let report = executor.execute(items: itemsToClean) { current, total, name in
+                Task { @MainActor [weak self] in
+                    self?.cleanupProgressCurrent = current
+                    self?.cleanupProgressTotal = total
+                    self?.cleanupCurrentItemName = name
+                }
+            }
+            await MainActor.run { [weak self] in
+                self?.cleanupReport = report
+                self?.cleanupPhase = .done
+                // Remove successfully cleaned items from results
+                let removedPaths = Set(
+                    report.succeeded.map { $0.item.path }
+                )
+                self?.results.removeAll { removedPaths.contains($0.path) }
+                self?.selectedItemIDs.removeAll()
+            }
         }
     }
 
