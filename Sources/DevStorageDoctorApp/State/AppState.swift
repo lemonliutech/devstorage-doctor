@@ -139,14 +139,23 @@ final class AppState {
               item.riskLevel != .protected,
               item.riskLevel != .unsupported,
               item.category != .packageOutput else { return }
-        if selectedItemIDs.contains(item.id) {
-            selectedItemIDs.remove(item.id)
-            selectedSubPaths.removeValue(forKey: item.id)
+
+        if item.subPaths.isEmpty {
+            // Simple item: plain toggle
+            if selectedItemIDs.contains(item.id) {
+                selectedItemIDs.remove(item.id)
+            } else {
+                selectedItemIDs.insert(item.id)
+            }
         } else {
-            selectedItemIDs.insert(item.id)
-            // Default: nothing selected — user picks sub-paths explicitly
-            if !item.subPaths.isEmpty {
-                selectedSubPaths[item.id] = []
+            // Aggregated item: none → all → none
+            let current = selectedSubPaths[item.id] ?? []
+            if current.isEmpty {
+                selectedSubPaths[item.id] = Set(item.subPaths.map(\.path))
+                selectedItemIDs.insert(item.id)
+            } else {
+                selectedItemIDs.remove(item.id)
+                selectedSubPaths.removeValue(forKey: item.id)
             }
         }
     }
@@ -168,23 +177,6 @@ final class AppState {
         }
     }
 
-    func selectAllSubPaths(for item: StorageItem) {
-        selectedSubPaths[item.id] = Set(item.subPaths.map(\.path))
-        selectedItemIDs.insert(item.id)
-    }
-
-    func invertSubPathSelection(for item: StorageItem) {
-        let current = selectedSubPaths[item.id] ?? []
-        let all = Set(item.subPaths.map(\.path))
-        let inverted = all.subtracting(current)
-        selectedSubPaths[item.id] = inverted
-        if inverted.isEmpty {
-            selectedItemIDs.remove(item.id)
-            selectedSubPaths.removeValue(forKey: item.id)
-        } else {
-            selectedItemIDs.insert(item.id)
-        }
-    }
 
     func subPathSelectionState(for item: StorageItem) -> SubPathSelectionState {
         guard !item.subPaths.isEmpty else { return .none }

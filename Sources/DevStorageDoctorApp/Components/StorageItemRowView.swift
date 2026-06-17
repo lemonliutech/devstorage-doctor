@@ -109,7 +109,6 @@ struct StorageItemRowView: View {
                 // Aggregated item — per-sub-path checkboxes
                 detailRow("Paths") {
                     VStack(alignment: .leading, spacing: 6) {
-                        subPathBatchControls
                         ForEach(item.subPaths) { sub in
                             SubPathRowView(item: item, subPath: sub)
                         }
@@ -136,28 +135,6 @@ struct StorageItemRowView: View {
         }
         .padding(.leading, 26)
         .padding(.vertical, 6)
-    }
-
-    // MARK: - Batch controls for sub-paths
-
-    @ViewBuilder
-    private var subPathBatchControls: some View {
-        if !item.subPaths.isEmpty {
-            HStack(spacing: Spacing.tight) {
-                Button("全选") { state.selectAllSubPaths(for: item) }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                Text("·")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                Button("反选") { state.invertSubPathSelection(for: item) }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                Spacer()
-            }
-        }
     }
 
     // Sub-path rows defined at file scope below as SubPathRowView
